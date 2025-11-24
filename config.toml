@@ -1,0 +1,18 @@
+allowed_extensions = [".png", ".jpg", ".jpeg", ".gif", ".svg"] # 图片文件扩展名
+
+[web]
+title = "Zedo 的图库"
+base_url = ""      # 基础 URL，用于生成图片链接，不填则使用 location.href
+logo_url = ""      # 网站左上角 Logo URL，不填则使用默认图标
+
+[fastapi]
+host = "0.0.0.0"                            # 监听所有可用接口
+port = 8000                                 # 监听端口
+title = "图片监控服务"
+description = "基于 FastAPI 和 Watchdog 的图库服务"
+
+[watchdog]
+monitor_dir = "img"                # 监控的图片目录，相对于项目根目录
+json_file = "./static/images.json" # 保存 JSON 文件的路径，相对于项目根目录
+monitor_delay = 0.2                # 监控延迟，单位秒
+debounce_interval = 0.8            # 防抖间隔，单位秒

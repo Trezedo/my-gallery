@@ -1,0 +1,17 @@
+[tool.black]
+line-length = 108 # 增加行长度
+
+[tool.ruff]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+line-length = 108 # 与 Black 保持一致
+
+[tool.ruff.format]
+skip-magic-trailing-comma = true # 避免强制尾随逗号

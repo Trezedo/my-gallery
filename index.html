@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片库</title>
+    <!-- 引入Tailwind CSS -->
+    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+    <!-- 引入Vue.js -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- 引入Iconify -->
+    <script src="https://cdn.jsdelivr.net/npm/@iconify/iconify@3.0/dist/iconify.min.js"></script>
+    <style>
+        /* 瀑布流布局 - 使用CSS Columns实现 */
+        .masonry-grid {
+            column-count: 4;
+            column-gap: 1rem;
+        }
+
+        .masonry-item {
+            break-inside: avoid;
+            margin-bottom: 1rem;
+            display: inline-block;
+            width: 100%;
+        }
+
+        /* 响应式列数 */
+        @media (max-width: 1200px) {
+            .masonry-grid {
+                column-count: 3;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .masonry-grid {
+                column-count: 2;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .masonry-grid {
+                column-count: 1;
+            }
+        }
+
+        /* 平滑过渡效果 */
+        .fade-enter-active,
+        .fade-leave-active {
+            transition: opacity 0.3s ease;
+        }
+
+        .fade-enter-from,
+        .fade-leave-to {
+            opacity: 0;
+        }
+
+        /* 图片加载动画 */
+        @keyframes shimmer {
+            0% {
+                background-position: -468px 0;
+            }
+
+            100% {
+                background-position: 468px 0;
+            }
+        }
+
+        .shimmer {
+            animation-duration: 1.25s;
+            animation-fill-mode: forwards;
+            animation-iteration-count: infinite;
+            animation-name: shimmer;
+            animation-timing-function: linear;
+            background: linear-gradient(to right, #f6f7f8 8%, #edeef1 18%, #f6f7f8 33%);
+            background-size: 800px 104px;
+            position: relative;
+        }
+
+        /* 图片容器 */
+        .image-container {
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        /* 图片样式 */
+        .image-item {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: transform 0.3s ease;
+        }
+
+        /* 图片名样式 - 移到图片下方 */
+        .image-name-container {
+            padding: 0.75rem;
+            background: white;
+            border-top: 1px solid #f3f4f6;
+        }
+
+        .image-name-text {
+            font-size: 0.875rem;
+            color: #374151;
+            font-weight: 500;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            word-break: break-all;
+        }
+
+        /* 图片尺寸信息 */
+        .image-info {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+
+        /* 操作按钮容器 */
+        .action-buttons {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .image-container:hover .action-buttons {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        /* 操作按钮样式 */
+        .action-btn {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-1px);
+        }
+
+        /* 模态框样式 - 修复居中问题 */
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .modal-content {
+            position: relative;
+            max-width: 90vw;
+            max-height: 90vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-image {
+            max-width: 100%;
+            max-height: 85vh;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+        }
+
+        /* 通知 */
+        .notification {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100">
+    <div id="app" class="min-h-screen flex flex-col">
+        <!-- 顶部导航栏 - 固定 -->
+        <header class="bg-white shadow-sm py-4 px-6 fixed top-0 left-0 right-0 z-50">
+            <div class="flex items-center justify-between">
+                <h1 class="text-xl font-bold text-gray-800 flex items-center">
+                    <span class="iconify mr-2" data-icon="mdi:image-multiple"></span>
+                    图片库
+                </h1>
+                <div class="text-sm text-gray-500 flex items-center">
+                    <span v-if="data" class="mr-4 flex items-center">
+                        <span class="iconify mr-1" data-icon="mdi:clock-outline"></span>
+                        最后更新: {{ data.last_updated }}
+                    </span>
+                    <span v-if="data" class="flex items-center">
+                        <span class="iconify mr-1" data-icon="mdi:image-outline"></span>
+                        图片数量: {{ data.count }}
+                    </span>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主内容区 -->
+        <div class="flex flex-1 pt-16">
+            <!-- 侧边栏 - 固定 -->
+            <aside class="w-64 bg-white shadow-md overflow-y-auto fixed left-0 top-16 bottom-0 z-40">
+                <div class="p-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-700 flex items-center">
+                        <span class="iconify mr-2" data-icon="mdi:folder"></span>
+                        文件夹
+                    </h2>
+                </div>
+                <ul class="py-2">
+                    <li v-for="(folderName, index) in Object.keys(folders)" :key="index">
+                        <button @click="selectFolder(folderName)" :class="[
+                                'w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors',
+                                selectedFolder === folderName ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700'
+                            ]">
+                            <span class="flex items-center">
+                                <span class="iconify mr-2" data-icon="mdi:folder-outline"></span>
+                                {{ folderName === '.' ? '根目录' : folderName }}
+                                <span class="ml-auto bg-gray-200 text-gray-700 text-xs rounded-full px-2 py-1">
+                                    {{ folders[folderName].length }}
+                                </span>
+                            </span>
+                        </button>
+                    </li>
+                </ul>
+            </aside>
+
+            <!-- 图片展示区 -->
+            <main class="flex-1 p-6 overflow-y-auto ml-64 mt-0">
+                <div v-if="loading" class="flex items-center justify-center h-full">
+                    <div class="text-center">
+                        <div
+                            class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500">
+                        </div>
+                        <p class="mt-4 text-gray-600">加载中...</p>
+                    </div>
+                </div>
+
+                <div v-else>
+                    <!-- 当前文件夹信息 -->
+                    <div class="mb-6 flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="iconify mr-2 text-2xl text-blue-500" data-icon="mdi:folder-open"></span>
+                            <div>
+                                <h2 class="text-2xl font-bold text-gray-800">
+                                    {{ selectedFolder === '.' ? '根目录' : selectedFolder }}
+                                </h2>
+                                <p class="text-gray-600 flex items-center">
+                                    <span class="iconify mr-1" data-icon="mdi:image-outline"></span>
+                                    共 {{ currentImages.length }} 张图片
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- 整理图片按钮 - 只在根目录显示 -->
+                        <button v-if="selectedFolder === '.' && currentImages.length > 0" @click="previewOrganize"
+                            class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center transition-colors"
+                            :disabled="organizeLoading">
+                            <span class="iconify mr-2" data-icon="mdi:sort"></span>
+                            {{ organizeLoading ? '计算中...' : '整理图片' }}
+                        </button>
+                    </div>
+
+                    <!-- 瀑布流图片展示 -->
+                    <div v-if="currentImages.length > 0" class="masonry-grid">
+                        <div v-for="(image, index) in currentImages" :key="index"
+                            class="masonry-item bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                            <div class="image-container">
+                                <img :src="getImagePath(image.name)" :alt="image.name" class="image-item shimmer"
+                                    loading="lazy" @load="imageLoaded" @error="imageError"
+                                    @click="viewLargeImage(getImagePath(image.name))" />
+
+                                <!-- 操作按钮 -->
+                                <div class="action-buttons absolute top-3 right-3 flex space-x-2">
+                                    <button @click.stop="copyImageLink(image)"
+                                        class="action-btn text-gray-700 p-2 rounded-full shadow-lg transition-all duration-200"
+                                        title="复制链接">
+                                        <span class="iconify" data-icon="mdi:link-variant"
+                                            style="font-size: 18px;"></span>
+                                    </button>
+                                    <button @click.stop="copyImageLink(image, 'md')"
+                                        class="action-btn text-gray-700 p-2 rounded-full shadow-lg transition-all duration-200"
+                                        title="复制 MarkDown 链接">
+                                        <span class="iconify" data-icon="picon:markdown"
+                                            style="font-size: 18px;"></span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 图片名 - 统一显示在图片下方 -->
+                            <div class="image-name-container">
+                                <div class="flex items-start">
+                                    <span class="iconify mr-2 text-gray-400 mt-0.5 flex-shrink-0" data-icon="mdi:image"
+                                        style="font-size: 16px;"></span>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="image-name-text">{{ image.name }}</p>
+                                        <div class="image-info flex items-center space-x-2">
+                                            <span>{{ formatImageSize(image.size) }}</span>
+                                            <span>•</span>
+                                            <span>{{ image.width }} × {{ image.height }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 空状态 -->
+                    <div v-else class="flex items-center justify-center h-64">
+                        <div class="text-center">
+                            <span class="iconify mx-auto text-6xl text-gray-400" data-icon="mdi:image-off"></span>
+                            <h3 class="mt-4 text-lg font-medium text-gray-900">暂无图片</h3>
+                            <p class="mt-2 text-gray-500">此文件夹中没有图片</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- 大图查看模态框 - 修复居中问题 -->
+        <div v-if="showModal" class="fixed inset-0 z-50 modal-overlay" @click="closeModal">
+            <div class="modal-container">
+                <div class="modal-content" @click.stop>
+                    <button @click="closeModal"
+                        class="absolute -top-12 -right-2 text-white hover:text-gray-300 transition-colors p-2 z-10"
+                        title="关闭">
+                        <span class="iconify" data-icon="mdi:close" style="font-size: 28px;"></span>
+                    </button>
+                    <img :src="currentLargeImage" :alt="'大图预览'" class="modal-image rounded-lg shadow-2xl" />
+                </div>
+            </div>
+        </div>
+
+        <!-- 复制成功提示 -->
+        <div v-if="notification.value"
+            class="notification fixed top-20 right-6 z-50 text-white px-4 py-3 rounded-lg shadow-lg transition-all duration-300">
+            <div class="flex items-center">
+                <span class="iconify mr-2" data-icon="mdi:check-circle" style="color: #10B981;"></span>
+                <span>{{notification.message}}</span>
+            </div>
+        </div>
+
+        <!-- 整理预览模态框 -->
+        <div v-if="showOrganizeModal" class="fixed inset-0 z-50 modal-overlay" @click="closeOrganizeModal">
+            <div class="modal-container">
+                <div class="modal-content bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-hidden"
+                    @click.stop>
+                    <!-- 模态框头部 -->
+                    <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                        <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                            <span class="iconify mr-2" data-icon="mdi:sort"></span>
+                            图片整理预览
+                        </h3>
+                        <button @click="closeOrganizeModal" class="text-gray-400 hover:text-gray-600 transition-colors">
+                            <span class="iconify" data-icon="mdi:close" style="font-size: 24px;"></span>
+                        </button>
+                    </div>
+
+                    <!-- 模态框内容 -->
+                    <div class="p-6 overflow-y-auto">
+                        <!-- 整理选项 -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">整理方式</label>
+                            <div class="flex space-x-4">
+                                <label class="flex items-center">
+                                    <input type="radio" v-model="organizeMode" value="byTime" class="mr-2"
+                                        :disabled="organizeLoading">
+                                    <span class="flex items-center">
+                                        <span class="iconify mr-1" data-icon="mdi:clock-outline"></span>
+                                        按时间整理
+                                    </span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" v-model="organizeMode" value="rename" class="mr-2"
+                                        :disabled="organizeLoading">
+                                    <span class="flex items-center">
+                                        <span class="iconify mr-1" data-icon="mdi:rename-box"></span>
+                                        智能重命名
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- 预览内容 -->
+                        <div v-if="organizePreview.length > 0"
+                            class="border border-gray-200 rounded-lg overflow-hidden">
+                            <div class="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                                <h4 class="font-medium text-gray-700">预览更改 ({{ organizePreview.length }} 个文件)</h4>
+                            </div>
+                            <div class="max-h-96 overflow-y-auto">
+                                <div v-for="(item, index) in organizePreview" :key="index"
+                                    class="flex items-center justify-between p-4 border-b border-gray-100 hover:bg-gray-50">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="text-sm text-gray-600 mb-1">原文件名</div>
+                                        <div class="text-gray-800 truncate">{{ item.oldName }}</div>
+                                    </div>
+                                    <div class="mx-4 text-blue-500">
+                                        <span class="iconify" data-icon="mdi:arrow-right"></span>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="text-sm text-gray-600 mb-1">新位置/名称</div>
+                                        <div class="text-green-600 truncate">{{ item.newName }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 加载状态 -->
+                        <div v-if="organizeLoading" class="flex items-center justify-center py-8">
+                            <div class="text-center">
+                                <div
+                                    class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500">
+                                </div>
+                                <p class="mt-2 text-gray-600">正在计算整理方案...</p>
+                            </div>
+                        </div>
+
+                        <!-- 空状态 -->
+                        <div v-else-if="organizePreview.length === 0" class="text-center py-8 text-gray-500">
+                            <span class="iconify mx-auto text-4xl mb-2" data-icon="mdi:file-document-outline"></span>
+                            <p>选择整理方式后点击预览查看更改</p>
+                        </div>
+                    </div>
+
+                    <!-- 模态框底部 -->
+                    <div class="flex justify-end space-x-3 p-6 border-t border-gray-200 bg-gray-50">
+                        <button @click="closeOrganizeModal"
+                            class="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                            :disabled="organizeLoading">
+                            取消
+                        </button>
+                        <button v-if="organizePreview.length > 0" @click="confirmOrganize"
+                            class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center"
+                            :disabled="organizeLoading">
+                            <span class="iconify mr-2" data-icon="mdi:check"></span>
+                            确认整理
+                        </button>
+                        <button v-else @click="previewOrganize"
+                            class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center"
+                            :disabled="organizeLoading">
+                            <span class="iconify mr-2" data-icon="mdi:eye-outline"></span>
+                            预览更改
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script src="/static/index.js"> </script>
+
+</html>

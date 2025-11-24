@@ -1,0 +1,16 @@
+# 忽略所有虚拟环境目录
+.env/
+.venv/
+env/
+venv/
+
+# 忽略Python缓存和编译文件
+__pycache__/
+
+# VSCode
+.vscode
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
