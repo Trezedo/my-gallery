@@ -13,7 +13,9 @@ createApp({
     const loadImages = async () => {
       try {
         loading.value = true;
-        const response = await fetch("/static/images.json");
+        const response = await fetch(
+          "/static/images.json" + "?t=" + new Date().getTime(),
+        ); // 防止缓存
         if (!response.ok) {
           throw new Error("无法加载数据");
         }
@@ -48,7 +50,6 @@ createApp({
       if (selectedFolder.value === ".") {
         return baseUrl + imageName;
       } else {
-        console.log(`${selectedFolder.value}/${imageName}`);
         return baseUrl + `${selectedFolder.value}/${imageName}`;
       }
     };
@@ -86,7 +87,7 @@ createApp({
       }, 2000);
     };
 
-    // 复制图片链接,区分 URL 和 MarkDown 格式
+    // 复制图片链接，区分 URL 和 MarkDown 格式
     const copyImageLink = async (image, format = "url") => {
       let link = location.href.replace(/\/$/, "") + getImagePath(image.name);
       let copyText = link;
