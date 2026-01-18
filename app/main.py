@@ -12,6 +12,9 @@ from app.core.config import config
 from app.utils.observer import start_file_monitor
 from app.utils.organizer import organize_images, preview_organize_images
 
+# 设置项目根目录
+root_path = Path(__file__).parent.parent
+
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
@@ -34,15 +37,11 @@ async def lifespan(_: FastAPI):
 # 创建 FastAPI 应用
 app = FastAPI(title=config.fastapi.title, description=config.fastapi.description, lifespan=lifespan)
 
-# 挂载静态文件
-app.mount("/img", StaticFiles(directory=config.watchdog.monitor_dir), name="static_images")
-app.mount("/static", StaticFiles(directory="static"), name="static_files")
-
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
     """返回首页"""
-    html_path: Path = Path(__file__).parent.parent / "index.html"
+    html_path: Path = root_path / config.web.dir / "index.html"
     if not html_path.exists():
         raise HTTPException(status_code=404, detail="index.html 文件不存在")
     return FileResponse(html_path)
@@ -69,8 +68,12 @@ async def confirm_organize(mode: str):
 
 
 if __name__ == "__main__":
-    # 设置项目根目录
-    os.environ["PROJECT_ROOT"] = str(Path(__file__).parent.parent)
+    # 设置全局环境变量
+    os.environ["PROJECT_ROOT"] = str(root_path)
+
+    # 挂载静态文件
+    app.mount("/img", StaticFiles(directory=root_path / config.watchdog.monitor_dir), name="images")
+    app.mount("/static", StaticFiles(directory=root_path / config.web.dir / "static"), name="static_files")
 
     # 启动应用
     uvicorn.run(app, host=config.fastapi.host, port=config.fastapi.port, reload=False)

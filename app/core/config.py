@@ -10,6 +10,7 @@ except ImportError:  # Python 3.10 及以下
 
 
 class WebConfig(BaseSettings):
+    dir: str
     title: str
     base_url: str
     logo_url: str
