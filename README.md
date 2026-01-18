@@ -1,5 +1,7 @@
 # 🖼️ 本地图库管理系统
 
+一个基于 Python FastAPI + Watchdog 的本地图库解决方案，自动监控图片文件夹并通过 Web 界面展示。
+
 ## 🎯 项目初衷
 
 本项目旨在利用 Python 开发一个功能完整的本地图库管理系统，主要解决以下需求：
@@ -10,13 +12,11 @@
 - ⚡ 在线管理 - 支持移动、重命名、删除、回收站等操作
 - ☁️ 静态部署 - 可部署到 Netlify 等静态托管服务
 
-一个基于 Python FastAPI + Watchdog 的本地图库解决方案，自动监控图片文件夹并通过 Web 界面展示。
-
 ## ✨ 特性
 
-- 👁️ **自动监控** - 使用 Watchdog 实时监控`img`目录的变化
+- 👁️ **自动监控** - 使用 Watchdog 实时监控 `img` 目录的变化
 - 🌐 **Web 展示** - FastAPI 提供优雅的图片浏览界面
-- 📁 **自动索引** - 实时生成`images.json`索引文件
+- 📁 **自动索引** - 实时生成 `images.json` 索引文件
 - 🎯 **零配置** - 开箱即用，无需复杂设置
 - 📱 **响应式设计** - 适配各种设备屏幕
 
@@ -38,7 +38,7 @@ my-gallery/
 │   └── index.js          # JavaScript 脚本
 ├── config.toml           # ⚙️ 配置文件
 ├── index.html            # 🎨 主页面模板
-├── pyproject.toml        # 📦 项目配置和依赖
+├── pyproject.toml        # 📦 项目配置和 lint/format
 └── requirements.txt      # 📋 Python 依赖列表
 ```
 
@@ -46,21 +46,21 @@ my-gallery/
 
 ### 安装依赖
 
-```bash
+Windows (PowerShell):
+
+```powershell
 python -m venv .venv                   # 创建虚拟环境
-.venv/Scripts/activate
-pip install -r requirements.txt     # 添加依赖
+.venv/Scripts/Activate.ps1
+pip install -r requirements.txt        # 安装依赖
 ```
 
 ### 启动服务
 
-```bash
+```powershell
 python -m app.main
 ```
 
-### 访问界面
-
-打开浏览器访问: `http://localhost:8000`
+然后打开浏览器访问: `http://localhost:8000`
 
 ## ⚙️ 配置说明
 
@@ -138,16 +138,16 @@ GET /api/images
 
 ```json
 {
-  "last_updated": "2024-01-01T12:00:00",
-  "total_images": 42,
-  "images": [
-    {
-      "name": "photo.jpg",
-      "path": "img/photo.jpg",
-      "size": 1024000,
-      "modified": "2024-01-01T10:30:00"
-    }
-  ]
+  "last_updated": "2025-11-24 12:30:00",
+  "count": 3,
+  "base_url": "",
+  "images": {
+    ".": [
+      { "name": "1.png", "width": 1058, "height": 819, "size": 95794 },
+      { "name": "2.png", "width": 1920, "height": 1080, "size": 662760 },
+      { "name": "3.png", "width": 1920, "height": 1339, "size": 2861693 }
+    ]
+  }
 }
 ```
 
@@ -165,21 +165,16 @@ GET /api/images
 ### 运行开发模式
 
 ```bash
-python app/main.py
+python -m app.main
 ```
 
 ### 项目结构说明
 
 - `app/main.py` - 应用入口点
+- `app/core/` - 核心配置
 - `app/utils/` - 工具模块
 - `img/` - 用户图片存储
 - `config.toml` - 应用配置
-
-### 添加新功能
-
-1. 在 `app/utils/` 中添加新模块
-2. 在 `app/main.py` 中注册路由或服务
-3. 更新 `config.toml` 添加配置项
 
 ## 🔄 工作流程
 
@@ -198,11 +193,3 @@ Web界面展示 (index.html)
 ## 📄 许可证
 
 MIT License
-
-## 🤝 贡献
-
-欢迎提交 Issue 和 Pull Request！
-
----
-
-这个 README 完全基于你的实际项目结构编写。需要我为你生成对应的 `config.toml` 模板或补充任何其他文件吗？😊
