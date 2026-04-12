@@ -6,7 +6,6 @@
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff"
   },
-  "python.defaultInterpreterPath": ".\\.venv\\Scripts\\python.exe", // 默认 python 解释器（win系统）
   "python.languageServer": "Pylance",
   "python.analysis.typeCheckingMode": "standard",
   "python.analysis.autoImportCompletions": true,
