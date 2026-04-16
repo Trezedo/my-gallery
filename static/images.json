@@ -1,6 +1,6 @@
 {
-  "last_updated": "2026-04-15 22:45:04",
-  "count": 184,
+  "last_updated": "2026-04-16 22:19:17",
+  "count": 185,
   "base_url": "zedo-img.netlify.app",
   "images": {
     ".": [
@@ -128,7 +128,8 @@
       { "name": "12201926.png", "width": 336, "height": 88, "size": 6108 },
       { "name": "15221818.png", "width": 1024, "height": 218, "size": 16054 },
       { "name": "15221909.png", "width": 1056, "height": 779, "size": 110652 },
-      { "name": "15223045-格式化演示.gif", "width": 1922, "height": 1045, "size": 573895 }
+      { "name": "15223045-格式化演示.gif", "width": 1922, "height": 1045, "size": 573895 },
+      { "name": "16000628.png", "width": 1480, "height": 790, "size": 219109 }
     ],
     "chrome": [
       { "name": "breaking-inside-function-b75481bc017a8_960.png", "width": 1132, "height": 744, "size": 21661 },
@@ -330,6 +331,7 @@
     "/img/2026-04/15221818.png",
     "/img/2026-04/15221909.png",
     "/img/2026-04/15223045-格式化演示.gif",
+    "/img/2026-04/16000628.png",
     "/img/chrome/breaking-inside-function-b75481bc017a8_960.png",
     "/img/chrome/changes-new-commands-5c3176479dc2c_960.png",
     "/img/chrome/example-0-38ab0691323fe_960.png",
